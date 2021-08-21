@@ -1,4 +1,4 @@
-from flask import Flask, g, render_template, request, redirect, session
+from flask import Flask, g, render_template, request, redirect, session, Response, jsonify
 from config import Config
 from passlib.hash import pbkdf2_sha256
 from flask_sqlalchemy import SQLAlchemy
@@ -18,6 +18,14 @@ class User(db.Model):
     name = db.Column(db.String)
     username = db.Column(db.String)
     encrypted_password = db.Column(db.String)
+    date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    notes = db.relationship('Note', backref='user', lazy=True)
+
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String, nullable=False)
+    note_markup = db.Column(db.String)
     date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 
@@ -65,5 +73,27 @@ def create_account():
     
     return render_template('create_account.html')
 
+@app.route('/note', methods=['GET', 'POST'])
+def note():
+    if request.method == 'POST':
+        note_markup = request.form['editordata']
+        title = request.form['title']
+
+        note = Note(user_id=session['user']['id'], note_markup=note_markup, title=title)
+        db.session.add(note)
+        db.session.commit()
+
+        return Response(status=204)
+    else:
+        notes = Note.query.filter(Note.user_id == session['user']['id']).order_by(Note.date_created.desc()).all()
+        return jsonify(utils.list_objects_as_dict(notes))
+
+
+#----------HELPERS----------
+def get_user(session):
+    user_id = session['user']['id']
+    user = User.query.filter(User.id == user_id)
+    return user
+    
 if __name__ == "__main__":
     app.run(host='127.0.0.1', port=8000)

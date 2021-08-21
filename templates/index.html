@@ -1,1 +1,96 @@
-<h1>HELLO WORLD</h1>
+{% extends 'base.html' %}
+{% set active = "Home" %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm d-flex text-center justify-content-center">
+        <input id="search-toggle" type="checkbox" checked data-toggle="toggle" data-on="Google" data-off="DuckDuckGo" data-onstyle="info" data-offstyle="info">
+        <form id="google-search" visible=false class="form-inline" action="https://www.google.com/search" method="GET">
+            <input class="form-control search" type="text" name="q" placeholder="Google Search">
+            <input type="submit" class="btn btn-primary mb-0" value="Google Search">
+        </form>
+        <form id="duckduck-search" style="display: none;" class="form-inline" action="https://www.duckduckgo.com" method="GET">
+            <input class="form-control search" type="text" name="q" placeholder="DuckDuckGo Search">
+            <input type="submit" class="btn btn-primary mb-0" value="Duck Search">
+        </form>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md d-flex text-center justify-content-center maincol">
+        <form id="noteform" method="POST" action="/note" class="pt-5">
+            <textarea id="summernote" name="editordata"></textarea>
+            <input id="title" class="form-control" type="text" name="title" placeholder="Enter Note Title">
+            <input id="createnote" type="submit" class="btn btn-primary btn-block mb-0" value="Create Note">
+            <hr/>
+            <ul id="noteslist" class="list-group">
+            </ul>
+        </form>
+    </div>
+    <div class="col-md d-flex text-center justify-content-center maincol">
+        Search hist
+    </div>
+    <div class="col-md d-flex text-center justify-content-center maincol">
+        Links
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            height: 200,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['view', ['codeview', 'help']]
+            ]
+        });
+        $("#createnote").css("width", $("summernote").css("width"));
+        $.get("/note", function(data) {
+            for (let i=0; i<data.length; i++) {
+                $('#noteslist').append(
+                    "<li class='list-group-item btn'>"+removeTags(data[i].title)+"</li>"
+                )
+            }
+        });
+    });
+
+    $(document).on('submit', '#noteform', function() {
+        console.log($("#title").val())
+        $('#noteslist').prepend(
+            "<li class='list-group-item btn'>"+$("#title").val()+"</li>"
+        )
+    });
+
+    $(function() {
+        $("#search-toggle").change(function() {
+            if ($(this).prop('checked') === true) {
+                $("#duckduck-search").css("display", "none");
+                $("#google-search").css("display", "inline");
+            } else {
+                $("#duckduck-search").css("display", "inline");
+                $("#google-search").css("display", "none");
+            }
+        })
+    });
+
+
+
+    function removeTags(str) {
+        if ((str===null) || (str===''))
+            return false;
+        else
+            str = str.toString();
+            
+        // Regular expression to identify HTML tags in 
+        // the input string. Replacing the identified 
+        // HTML tag with a null string.
+        return str.replace( /(<([^>]+)>)/ig, '');
+    }
+</script>
+{% endblock %}

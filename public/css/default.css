@@ -17,3 +17,11 @@ body {
 header {
     background-color: rgb(129, 30, 210);
 }
+
+.search.search {
+    width: 600px;
+}
+
+#summernote {
+    height: 1000px;
+}
