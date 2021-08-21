@@ -7,6 +7,7 @@ load_dotenv(path.join(basedir, '.env'))
 class Config(object):
     DEBUG = False
     TESTING = False
+    SQL_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = environ.get("DATABASE_URI")
     DEFAULT_MODE = 'config.DevelopmentConfig'
 
