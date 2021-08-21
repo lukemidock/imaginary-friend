@@ -1,0 +1,19 @@
+body {
+    font-family: "Avenir";
+    font-size: 1rem;
+    background-color:#f5ea8c;
+}
+
+.col-sm {
+    margin-top: 12px;
+}
+
+#contentcard {
+    margin: 40px auto;
+    height: 500px;        
+    width: 420px;
+}
+
+header {
+    background-color: rgb(129, 30, 210);
+}
