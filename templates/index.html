@@ -22,9 +22,10 @@ Home
 <div class="row">
     <div class="col-md d-flex text-center justify-content-center maincol">
         <form id="noteform" method="POST" action="/note" class="pt-5">
+            <input style="display: none;" id="noteid" name="noteid">
             <textarea id="summernote" name="editordata"></textarea>
             <input id="title" class="form-control" type="text" name="title" placeholder="Enter Note Title">
-            <input id="createnote" type="submit" class="btn btn-primary btn-block mb-0" value="Create Note">
+            <input id="createnote" type="submit" class="btn btn-primary btn-block mb-0" value="Save Note">
             <hr/>
             <ul id="noteslist" class="list-group">
             </ul>
@@ -41,7 +42,7 @@ Home
 <script>
     $(document).ready(function() {
         $('#summernote').summernote({
-            height: 200,
+            height: 175,
             toolbar: [
                 ['style', ['style']],
                 ['font', ['bold', 'underline', 'clear']],
@@ -54,17 +55,23 @@ Home
         $.get("/note", function(data) {
             for (let i=0; i<data.length; i++) {
                 $('#noteslist').append(
-                    "<li class='list-group-item btn'>"+removeTags(data[i].title)+"</li>"
-                )
+                    "<li id=note"+data[i].id+" class='list-group-item btn left-icon-holder'><i class='bi bi-trash'></i>"+data[i].title+"</li>"
+                );
+                $('#note'+data[i].id).click(function() {
+                    $.get("/get_note", {"id": data[i].id}, function(data) {
+                        $('#summernote').summernote('code', data.note_markup);
+                        $('#title').val(data.title);
+                        $('#noteid').val(data.id);
+                    });
+                });
+                $('#note'+data[i].id).children("i").click(function(e) {
+                    e.stopPropagation();
+                    $.get("/delete_note", {"id": data[i].id}, function() {
+                        window.location.href = '/';
+                    });
+                });
             }
         });
-    });
-
-    $(document).on('submit', '#noteform', function() {
-        console.log($("#title").val())
-        $('#noteslist').prepend(
-            "<li class='list-group-item btn'>"+$("#title").val()+"</li>"
-        )
     });
 
     $(function() {
@@ -78,19 +85,5 @@ Home
             }
         })
     });
-
-
-
-    function removeTags(str) {
-        if ((str===null) || (str===''))
-            return false;
-        else
-            str = str.toString();
-            
-        // Regular expression to identify HTML tags in 
-        // the input string. Replacing the identified 
-        // HTML tag with a null string.
-        return str.replace( /(<([^>]+)>)/ig, '');
-    }
 </script>
 {% endblock %}

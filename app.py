@@ -78,16 +78,36 @@ def note():
     if request.method == 'POST':
         note_markup = request.form['editordata']
         title = request.form['title']
+        note_id = request.form['noteid']
 
-        note = Note(user_id=session['user']['id'], note_markup=note_markup, title=title)
-        db.session.add(note)
-        db.session.commit()
+        if note_id:
+            note = Note.query.filter(Note.id == note_id).first()
+            note.title = title
+            note.note_markup = note_markup
+            note.date_created = datetime.datetime.utcnow()
+            db.session.commit()
+        else:
+            note = Note(user_id=session['user']['id'], note_markup=note_markup, title=title)
+            db.session.add(note)
+            db.session.commit()
 
-        return Response(status=204)
+        return redirect('/')
     else:
         notes = Note.query.filter(Note.user_id == session['user']['id']).order_by(Note.date_created.desc()).all()
         return jsonify(utils.list_objects_as_dict(notes))
 
+@app.route('/get_note', methods=['GET'])
+def get_note():
+    note_id = request.args['id']
+    note = Note.query.filter(Note.id == note_id, Note.user_id == session['user']['id']).first()
+    return jsonify(utils.object_as_dict(note))
+
+@app.route('/delete_note', methods=['GET'])
+def delete_note():
+    note_id = request.args['id']
+    Note.query.filter(Note.id == note_id, Note.user_id == session['user']['id']).delete()
+    db.session.commit()
+    return Response(status=204)
 
 #----------HELPERS----------
 def get_user(session):
