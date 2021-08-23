@@ -2,18 +2,17 @@
 {% set active = "Home" %}
 
 {% block title %}
-Log In
+Create Account
 {% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-8 d-flex text-center justify-content-center">
+    <div class="col-sm d-flex text-center justify-content-center">
         <div id="contentcard">
-            <h1>Log In</h1>
+            <h1>Links</h1>
 
             <p>
-                Please log in with your credentials below. If you are a new user, please
-                <a href="/create_account">create an account</a>.
+                Create a link
             </p>
 
             {% if message %}
@@ -22,17 +21,17 @@ Log In
             </div>
             {% endif %}
 
-            <form method="POST" action="/login" class="pt-5">
+            <form method="POST" action="/create_link" class="pt-5">
                 <div class="form-group row">
-                    <label for="example-text-input" class="col-2 col-form-label">Username</label>
+                    <label for="example-text-input" class="col-2 col-form-label">Title</label>
                     <div class="col-8">
-                        <input class="form-control" type="text" name="username">
+                        <input class="form-control" type="text" name="title">
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="example-text-input" class="col-2 col-form-label">Password</label>
+                    <label for="example-text-input" class="col-2 col-form-label">Url</label>
                     <div class="col-8">
-                        <input class="form-control" type="password" name="password">
+                        <input class="form-control" type="text" name="url">
                     </div>
                 </div>
                 <div class="row">
@@ -46,5 +45,4 @@ Log In
     </div>
 </div>
 <div class="row"></div>
-
 {% endblock %}

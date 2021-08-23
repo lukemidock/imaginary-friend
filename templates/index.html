@@ -7,21 +7,31 @@ Home
 
 {% block content %}
 <div class="row">
-    <div class="col-sm d-flex text-center justify-content-center">
+    <div class="col-xl d-flex text-center justify-content-center">
         <input id="search-toggle" type="checkbox" checked data-toggle="toggle" data-on="Google" data-off="DuckDuckGo" data-onstyle="info" data-offstyle="info">
-        <form id="google-search" visible=false class="form-inline" action="https://www.google.com/search" method="GET">
+        <div class="form-inline" id="google-search">
             <input class="form-control search" type="text" name="q" placeholder="Google Search">
-            <input type="submit" class="btn btn-primary mb-0" value="Google Search">
-        </form>
-        <form id="duckduck-search" style="display: none;" class="form-inline" action="https://www.duckduckgo.com" method="GET">
+            <button id="googlesubmit" type="submit" class="btn btn-primary mb-0">Google Search</button>
+        </div>
+        <div class="form-inline" id="duckduck-search" style="display: none;">
             <input class="form-control search" type="text" name="q" placeholder="DuckDuckGo Search">
-            <input type="submit" class="btn btn-primary mb-0" value="Duck Search">
-        </form>
+            <button id="duckducksubmit" type="submit" class="btn btn-primary">DuckDuckGo Search</button>
+        </div>
+    </div>
+</div>
+<div class="row d-flex text-center justify-content-center">
+    <div class="dropdown">
+        <a class="btn btn-primary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Search History
+        </a>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink"></div>
+        <button id="clear-searches" class="btn btn-primary">Clear All Searches</button>
     </div>
 </div>
 <div class="row">
     <div class="col-md d-flex text-center justify-content-center maincol">
-        <form id="noteform" method="POST" action="/note" class="pt-5">
+        <form id="noteform" method="POST" action="/note" class="pt-3">
+            <h2 class="column-header">Notes</h2>
             <input style="display: none;" id="noteid" name="noteid">
             <textarea id="summernote" name="editordata"></textarea>
             <input id="title" class="form-control" type="text" name="title" placeholder="Enter Note Title">
@@ -32,10 +42,12 @@ Home
         </form>
     </div>
     <div class="col-md d-flex text-center justify-content-center maincol">
-        Search hist
-    </div>
-    <div class="col-md d-flex text-center justify-content-center maincol">
-        Links
+        <div>
+            <h2 class="column-header pt-3">Links</h2>
+            <a class="btn btn-primary btn-block mb-0" href='/create_link'>Add New Link</a>
+            <hr/>
+            <div id="linkslist" class="list-group"></div>
+        </div>
     </div>
 </div>
 
@@ -72,7 +84,79 @@ Home
                 });
             }
         });
+        $.get('/links', function(data) {
+            for (let i=0; i<data.length; i++) {
+                $('#linkslist').append(
+                    `<a id=link${data[i].id} href="${data[i].url}" class="list-group-item list-group-item-action align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">${data[i].title}</h5>
+                            <i class='bi bi-trash'></i>
+                        </div>
+                        <p class="mb-1">${data[i].url}</p>
+                    </a>`
+                );
+                $('#link'+data[i].id).children("div").children('i').click(function(e) {
+                    e.stopPropagation();
+                    $.get("/delete_link", {"id": data[i].id}, function() {
+                        window.location.href = '/';
+                    });
+                });
+            }
+        });
+        $.get('/searches', function(data) {
+            for (let i=0; i<data.length; i++) {
+                $('.dropdown-menu').append(
+                    `<a id=search${data[i].id} class="dropdown-item btn left-icon-holder">
+                        <i class='bi bi-trash'></i>${data[i].query_text}
+                    </a>`
+                );
+                $('#search'+data[i].id).click(function() {
+                    if ($('#search-toggle').prop('checked') === true) {
+                        window.location.href = `https://www.google.com/search?q=${data[i].query_text}`;
+                    } else {
+                        window.location.href = `https://www.duckduckgo.com?q=${data[i].query_text}`;
+                    }
+                });
+                $('#search'+data[i].id).children('i').click(function(e) {
+                    e.stopPropagation();
+                    $.get("/delete_search", {"id": data[i].id}, function() {
+                        window.location.href = '/';
+                    });
+                });
+            }
+        });
+        $('#clear-searches').click(function() {
+            $.get('/clear_searches', function() {
+                window.location.href = '/';
+            });
+        });
+        $('#googlesubmit').click(create_search);
+        $('#duckducksubmit').click(create_search);
+
+        //if ($('#linkslist').is(':parent')) {
+            //$('#linkslist').css('visibility', 'visible');
+        //} else {
+            //$('#linkslist').css('visibility', 'hidden');
+       //}
+        if ($('#noteslist').is(':parent')) {
+            $('#noteslist').css('visibility', 'visible');
+        } else {
+            $('#noteslist').css('visibility', 'hidden');
+        }
     });
+
+    function create_search() {
+        search_type = $(this).parent('div').id;
+        query = $(this).siblings('input').val();
+
+        $.post('/searches', {"query": query}, function() {
+            if (search_type === "duckduck-search") {
+                window.location.href = `https://www.duckduckgo.com?q=${query}`;
+            } else {
+                window.location.href = `https://www.google.com/search?q=${query}`;
+            }
+        })
+    }
 
     $(function() {
         $("#search-toggle").change(function() {

@@ -35,8 +35,12 @@ header {
 }
 
 .list-group{
-    max-height: 250px;
-    margin-bottom: 10px;
+    max-height: 300px;
     overflow:scroll;
     -webkit-overflow-scrolling: touch;
+}
+
+.column-header {
+    text-align: center;
+    width:100%;
 }

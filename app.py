@@ -20,12 +20,27 @@ class User(db.Model):
     encrypted_password = db.Column(db.String)
     date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     notes = db.relationship('Note', backref='user', lazy=True)
+    links = db.relationship('Link', backref='user', lazy=True)
+    searches = db.relationship('Search', backref='user', lazy=True)
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String, nullable=False)
-    note_markup = db.Column(db.String)
+    note_markup = db.Column(db.String, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+class Link(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String, nullable=False)
+    url = db.Column(db.String, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+class Search(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    query_text = db.Column(db.String, nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 
@@ -34,6 +49,7 @@ class Note(db.Model):
 def index():
     return render_template('index.html')
 
+#----------AUTH----------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     message = None
@@ -73,6 +89,7 @@ def create_account():
     
     return render_template('create_account.html')
 
+#----------NOTES----------
 @app.route('/note', methods=['GET', 'POST'])
 def note():
     if request.method == 'POST':
@@ -106,6 +123,66 @@ def get_note():
 def delete_note():
     note_id = request.args['id']
     Note.query.filter(Note.id == note_id, Note.user_id == session['user']['id']).delete()
+    db.session.commit()
+    return Response(status=204)
+
+#----------LINKS----------
+@app.route('/links', methods=['GET'])
+def get_links():
+    links = Link.query.filter(Link.user_id == session['user']['id']).order_by(Link.date_created.desc()).all()
+    return jsonify(utils.list_objects_as_dict(links))
+
+@app.route('/create_link', methods=['GET', 'POST'])
+def create_link():
+    message = None
+    if request.method == 'POST':
+        title = request.form['title']
+        url = request.form['url']
+        user_id=session['user']['id']
+
+        if title and url:
+            db.session.add(Link(user_id=user_id, title=title, url=url))
+            db.session.commit()
+            return redirect('/')
+        elif not title and url:
+            message = "Missing title, please try again"
+        elif not url and title:
+            message = "Missing url, please try again"
+        else:
+            message = "See those boxes? Type something in them"
+
+    return render_template('create_link.html', message=message)
+
+@app.route('/delete_link', methods=['GET'])
+def delete_link():
+    link_id = request.args['id']
+    Link.query.filter(Link.id == link_id, Link.user_id == session['user']['id']).delete()
+    db.session.commit()
+    return Response(status=204)
+
+#----------SEARCH----------
+@app.route('/searches', methods=['GET', 'POST'])
+def searches():
+    user_id=session['user']['id']
+    if request.method == 'POST':
+        query = request.form['query']
+        db.session.add(Search(user_id=user_id, query_text=query))
+        db.session.commit()
+        return redirect('/')
+    else:
+        searches = Search.query.filter(Search.user_id == session['user']['id']).order_by(Search.date_created.desc()).all()
+        return jsonify(utils.list_objects_as_dict(searches))
+
+@app.route('/clear_searches', methods=['GET'])
+def clear_searches():
+    Search.query.filter(Search.user_id == session['user']['id']).delete()
+    db.session.commit()
+    return Response(status=204)
+
+@app.route('/delete_search', methods=['GET'])
+def delete_search():
+    search_id = request.args['id']
+    Search.query.filter(Search.id == search_id, Search.user_id == session['user']['id']).delete()
     db.session.commit()
     return Response(status=204)
 
